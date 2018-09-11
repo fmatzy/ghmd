@@ -6,11 +6,9 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/google/go-github/github"
 )
@@ -18,20 +16,6 @@ import (
 const (
 	usage = `
 Usage: ghmd FILE.md
-`
-
-	index = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>{{ .title }}</title>
-<link rel="stylesheet" href="/assets/github-markdown.css" media="all">
-</head>
-<body>
-<div class="markdown-body">{{ .body }}</div>
-</body>
-</html>
 `
 )
 
@@ -47,27 +31,23 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s: invalid file\n", mdname)
 		os.Exit(1)
 	}
-	_, err := os.Stat(mdname)
-	if err != nil {
+	if _, err := os.Stat(mdname); err != nil {
 		fmt.Fprintf(os.Stderr, "%s: not found\n", mdname)
 		os.Exit(1)
 	}
 
-	t := template.Must(template.New("index").Parse(index))
+	tmpl, err := Assets.Open("/assets/index.tmpl")
+	if err != nil {
+		panic(err)
+	}
+	b, err := ioutil.ReadAll(tmpl)
+	if err != nil {
+		panic(err)
+	}
+	t := template.Must(template.New("index").Parse(string(b)))
+
+	http.Handle("/assets/style/", http.FileServer(Assets))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		name := r.URL.Path
-		if strings.HasPrefix(name, "/assets/") {
-			b, err := ioutil.ReadFile(name[1:])
-			if err != nil {
-				http.NotFound(w, r)
-				return
-			}
-
-			w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(name)))
-			w.Write(b)
-			return
-		}
-
 		md, err := ioutil.ReadFile(mdname)
 		if err != nil {
 			http.NotFound(w, r)
