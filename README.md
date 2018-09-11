@@ -2,10 +2,16 @@
 
 Markdown preview server using GitHub Markdown API.
 
+## Installation
+
+```
+$ go get github.com/fmatzy/ghmd
+```
+
 ## Usage
 
 ```
-$ ./ghmd README.me
+$ ghmd README.me
 ```
 
 Visit http://localhost:8080 and see rendered HTML.
@@ -14,7 +20,6 @@ Visit http://localhost:8080 and see rendered HTML.
 
 - Live reload
 - Local rendering
-- Portability
 
 ## Reference
 
