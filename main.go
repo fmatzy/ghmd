@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,17 +17,22 @@ import (
 
 const (
 	usage = `
-Usage: ghmd FILE.md
+Usage: ghmd [-t TEMPLATE] FILE.md
 `
 )
 
+var (
+	tOpt = flag.String("t", "", "template file")
+)
+
 func main() {
-	if len(os.Args) < 2 {
+	flag.Parse()
+	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(1)
 	}
 
-	mdname := os.Args[1]
+	mdname := flag.Arg(0)
 	ext := filepath.Ext(mdname)
 	if ext != ".md" && ext != ".mkd" && ext != ".markdown" {
 		fmt.Fprintf(os.Stderr, "%s: invalid file\n", mdname)
@@ -36,7 +43,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	tmpl, err := Assets.Open("/assets/index.tmpl")
+	var tmpl io.Reader
+	var err error
+	if *tOpt != "" {
+		tmpl, err = os.Open(*tOpt)
+	} else {
+		tmpl, err = Assets.Open("/assets/index.tmpl")
+	}
 	if err != nil {
 		panic(err)
 	}
