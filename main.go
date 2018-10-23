@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"html/template"
@@ -12,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/google/go-github/github"
+	"github.com/gomarkdown/markdown"
 )
 
 const (
@@ -66,13 +65,8 @@ func main() {
 			http.NotFound(w, r)
 			return
 		}
-		client := github.NewClient(nil)
-		body, _, err := client.Markdown(context.Background(), string(md), nil)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), 503)
-			return
-		}
+
+		body := markdown.ToHTML(md, nil, nil)
 		d := map[string]interface{}{
 			"title": mdname,
 			"body":  template.HTML(body),
